@@ -48,20 +48,20 @@ pip install -r requirements.txt
 
 5. Примените миграции:
 ```bash
-python manage.py migrate
+python3 manage.py migrate
 ```
 Это создаст необходимые таблицы в базе данных.
 
 6. Создайте суперпользователя:
 ```bash
-python manage.py createsuperuser
+python3 manage.py createsuperuser
 ```
 Следуйте инструкциям в консоли для создания администратора сайта.
 
 7. (Опционально) Загрузка тестовых данных:
 ```bash
-python manage.py loaddata fixtures/initial_data.json
-python manage.py loaddata fixtures/many_to_many.json
+python3 manage.py loaddata fixtures/initial_data.json
+python3 manage.py loaddata fixtures/many_to_many.json
 ```
 Это загрузит тестовые данные, включая:
 - Тестовые аккаунты пользователей
@@ -71,7 +71,7 @@ python manage.py loaddata fixtures/many_to_many.json
 
 8. Запустите сервер разработки:
 ```bash
-python manage.py runserver
+python3 manage.py runserver
 ```
 Сервер будет доступен по адресу http://127.0.0.1:8000/
 
@@ -110,7 +110,7 @@ DEFAULT_FROM_EMAIL = 'CyberNews <noreply@cybernews.com>'
 
 1. Соберите статические файлы:
 ```bash
-python manage.py collectstatic
+python3 manage.py collectstatic
 ```
 
 2. Убедитесь, что в `settings.py` настроены:
