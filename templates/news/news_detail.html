@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+
+{% block title %}{{ news.title }} - CyberNews{% endblock %}
+
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <article>
+            <h1 class="mb-4">{{ news.title }}</h1>
+            
+            <div class="mb-4">
+                <span class="text-muted">
+                    <i class="bi bi-calendar"></i> {{ news.created_at|date:"d.m.Y H:i" }}
+                    <i class="bi bi-person ms-2"></i> {{ news.author.username }}
+                </span>
+            </div>
+            
+            {% if news.image %}
+                <img src="{{ news.image.url }}" class="img-fluid mb-4" alt="{{ news.title }}">
+            {% endif %}
+            
+            <div class="content mb-4">
+                {{ news.content|linebreaks }}
+            </div>
+            
+            <div class="mb-4">
+                {% for tag in news.tags.all %}
+                    <a href="{% url 'news:news_list' %}?tag={{ tag.slug }}" class="badge bg-secondary text-decoration-none">
+                        {{ tag.name }}
+                    </a>
+                {% endfor %}
+            </div>
+        </article>
+        
+        <section class="comments">
+            <h2 class="mb-4">Комментарии</h2>
+            
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'news:add_comment' news.pk %}" class="mb-4">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Отправить</button>
+                </form>
+            {% else %}
+                <div class="alert alert-info">
+                    <a href="{% url 'account_login' %}" class="alert-link">Войдите</a>, чтобы оставить комментарий.
+                </div>
+            {% endif %}
+            
+            {% for comment in comments %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>{{ comment.author.username }}</strong>
+                                <small class="text-muted ms-2">
+                                    {{ comment.created_at|date:"d.m.Y H:i" }}
+                                </small>
+                            </div>
+                        </div>
+                        <p class="card-text">{{ comment.content|linebreaks }}</p>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="alert alert-info">
+                    Комментариев пока нет.
+                </div>
+            {% endfor %}
+        </section>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Похожие новости</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for similar_news in similar_news %}
+                    <a href="{% url 'news:news_detail' similar_news.pk %}" class="list-group-item list-group-item-action">
+                        {{ similar_news.title }}
+                    </a>
+                {% empty %}
+                    <div class="list-group-item text-muted">
+                        Похожих новостей нет
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Популярные теги</h5>
+            </div>
+            <div class="card-body">
+                {% for tag in popular_tags %}
+                    <a href="{% url 'news:news_list' %}?tag={{ tag.slug }}" class="badge bg-secondary text-decoration-none me-1 mb-1">
+                        {{ tag.name }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

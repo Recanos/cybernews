@@ -1,0 +1,205 @@
+[
+    {
+        "model": "auth.user",
+        "pk": 1,
+        "fields": {
+            "username": "admin",
+            "email": "admin@cybernews.com",
+            "password": "pbkdf2_sha256$600000$h8KkeXvR6YKtGwLM$9XvR5lR5q+ZxQ8jX5z5f5Q1K5K5K5K5K5K5K5K5K5K5=",
+            "is_staff": true,
+            "is_superuser": true,
+            "is_active": true,
+            "date_joined": "2024-03-07T12:00:00Z"
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 2,
+        "fields": {
+            "username": "moderator",
+            "email": "moderator@cybernews.com",
+            "password": "pbkdf2_sha256$600000$h8KkeXvR6YKtGwLM$9XvR5lR5q+ZxQ8jX5z5f5Q1K5K5K5K5K5K5K5K5K5K5=",
+            "is_staff": true,
+            "is_active": true,
+            "date_joined": "2024-03-07T12:00:00Z"
+        }
+    },
+    {
+        "model": "users.profile",
+        "pk": 1,
+        "fields": {
+            "user": 1,
+            "nickname": "Главный админ",
+            "avatar": "",
+            "is_admin": true,
+            "is_moderator": false,
+            "created_at": "2024-03-07T12:00:00Z",
+            "updated_at": "2024-03-07T12:00:00Z"
+        }
+    },
+    {
+        "model": "users.profile",
+        "pk": 2,
+        "fields": {
+            "user": 2,
+            "nickname": "Модератор",
+            "avatar": "",
+            "is_admin": false,
+            "is_moderator": true,
+            "created_at": "2024-03-07T12:00:00Z",
+            "updated_at": "2024-03-07T12:00:00Z"
+        }
+    },
+    {
+        "model": "news.category",
+        "pk": 1,
+        "fields": {
+            "name": "Киберспорт",
+            "slug": "cybersport",
+            "description": "Новости из мира киберспорта"
+        }
+    },
+    {
+        "model": "news.category",
+        "pk": 2,
+        "fields": {
+            "name": "Турниры",
+            "slug": "tournaments",
+            "description": "Информация о турнирах"
+        }
+    },
+    {
+        "model": "news.category",
+        "pk": 3,
+        "fields": {
+            "name": "Игры",
+            "slug": "games",
+            "description": "Новости из мира компьютерных игр"
+        }
+    },
+    {
+        "model": "news.tag",
+        "pk": 1,
+        "fields": {
+            "name": "CS2",
+            "slug": "cs2"
+        }
+    },
+    {
+        "model": "news.tag",
+        "pk": 2,
+        "fields": {
+            "name": "Dota 2",
+            "slug": "dota-2"
+        }
+    },
+    {
+        "model": "news.tag",
+        "pk": 3,
+        "fields": {
+            "name": "NAVI",
+            "slug": "navi"
+        }
+    },
+    {
+        "model": "news.news",
+        "pk": 1,
+        "fields": {
+            "title": "NAVI выиграли турнир по CS2",
+            "slug": "navi-won-cs2-tournament",
+            "content": "Команда NAVI одержала победу в международном турнире по CS2, обыграв в финале команду Vitality со счетом 2:1. Это первая крупная победа команды в 2024 году.",
+            "image": "",
+            "category": 1,
+            "author": 1,
+            "created_at": "2024-03-07T13:00:00Z",
+            "updated_at": "2024-03-07T13:00:00Z",
+            "views_count": 0
+        }
+    },
+    {
+        "model": "news.news",
+        "pk": 2,
+        "fields": {
+            "title": "Анонсирован новый турнир по Dota 2",
+            "slug": "new-dota2-tournament-announced",
+            "content": "Valve объявила о проведении нового турнира по Dota 2 с призовым фондом $1,000,000. Турнир пройдет в мае 2024 года в Берлине.",
+            "image": "",
+            "category": 2,
+            "author": 1,
+            "created_at": "2024-03-07T14:00:00Z",
+            "updated_at": "2024-03-07T14:00:00Z",
+            "views_count": 0
+        }
+    },
+    {
+        "model": "news.comment",
+        "pk": 1,
+        "fields": {
+            "news": 1,
+            "author": 2,
+            "content": "Отличная игра от NAVI! Давно ждали такой победы!",
+            "created_at": "2024-03-07T13:30:00Z",
+            "is_approved": true
+        }
+    },
+    {
+        "model": "tournaments.tournament",
+        "pk": 1,
+        "fields": {
+            "name": "CS2 Major Berlin 2024",
+            "slug": "cs2-major-berlin-2024",
+            "description": "Первый мейджор турнир по CS2 в 2024 году",
+            "prize_pool": 1000000,
+            "location": "Берлин, Германия",
+            "start_date": "2024-05-01",
+            "end_date": "2024-05-14",
+            "game_type": "CS2",
+            "format": "Double Elimination",
+            "created_at": "2024-03-07T12:00:00Z",
+            "updated_at": "2024-03-07T12:00:00Z"
+        }
+    },
+    {
+        "model": "tournaments.team",
+        "pk": 1,
+        "fields": {
+            "name": "Natus Vincere",
+            "slug": "navi",
+            "logo": "",
+            "description": "Украинская киберспортивная организация",
+            "created_at": "2009-12-17",
+            "country": "UA",
+            "game_type": "CS2"
+        }
+    },
+    {
+        "model": "tournaments.team",
+        "pk": 2,
+        "fields": {
+            "name": "Team Vitality",
+            "slug": "vitality",
+            "logo": "",
+            "description": "Французская киберспортивная организация",
+            "created_at": "2013-08-08",
+            "country": "FR",
+            "game_type": "CS2"
+        }
+    },
+    {
+        "model": "tournaments.match",
+        "pk": 1,
+        "fields": {
+            "tournament": 1,
+            "team1": 1,
+            "team2": 2,
+            "start_time": "2024-05-14T18:00:00Z",
+            "end_time": null,
+            "score_team1": null,
+            "score_team2": null,
+            "status": "scheduled",
+            "location": "Mercedes-Benz Arena, Берлин",
+            "created_at": "2024-03-07T12:00:00Z",
+            "updated_at": "2024-03-07T12:00:00Z"
+        }
+    }
+] 

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load account %}
+
+{% block title %}Подтверждение email - CyberNews{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="text-center mb-4">Подтверждение email</h2>
+                    {% if confirmation %}
+                        <p class="text-center">
+                            {% blocktrans with email=confirmation.email_address.email %}
+                                Пожалуйста, подтвердите, что <strong>{{ email }}</strong> - это ваш email адрес.
+                            {% endblocktrans %}
+                        </p>
+                        <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+                            {% csrf_token %}
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Подтвердить</button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <p class="text-center">
+                            {% url 'account_email' as email_url %}
+                            {% blocktrans %}
+                                Срок действия ссылки для подтверждения email истек или она недействительна.
+                                Пожалуйста, <a href="{{ email_url }}">запросите новую ссылку для подтверждения</a>.
+                            {% endblocktrans %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

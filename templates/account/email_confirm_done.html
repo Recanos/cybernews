@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load account %}
+
+
+{% block title %}Email подтвержден - CyberNews{% endblock %}
+
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="text-center mb-4">Email подтвержден</h2>
+                    <p class="text-center">
+                        {% blocktrans %}
+                            Спасибо за подтверждение email адреса. Теперь вы можете войти в свой аккаунт.
+                        {% endblocktrans %}
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'account_login' %}" class="btn btn-primary">Войти</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,42 @@
+[
+    {
+        "model": "news.news_tags",
+        "pk": 1,
+        "fields": {
+            "news": 1,
+            "tag": 1
+        }
+    },
+    {
+        "model": "news.news_tags",
+        "pk": 2,
+        "fields": {
+            "news": 1,
+            "tag": 3
+        }
+    },
+    {
+        "model": "news.news_tags",
+        "pk": 3,
+        "fields": {
+            "news": 2,
+            "tag": 2
+        }
+    },
+    {
+        "model": "tournaments.tournament_teams",
+        "pk": 1,
+        "fields": {
+            "tournament": 1,
+            "team": 1
+        }
+    },
+    {
+        "model": "tournaments.tournament_teams",
+        "pk": 2,
+        "fields": {
+            "tournament": 1,
+            "team": 2
+        }
+    }
+] 

@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+
+{% block title %}Турниры - CyberNews{% endblock %}
+
+
+{% block content %}
+<h1 class="mb-4">Турниры</h1>
+
+{% if upcoming_tournaments %}
+    <section class="mb-5">
+        <h2 class="mb-4">Предстоящие турниры</h2>
+        <div class="row">
+            {% for tournament in upcoming_tournaments %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        {% if tournament.image %}
+                            <img src="{{ tournament.image.url }}" class="card-img-top" alt="{{ tournament.name }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h3 class="card-title h5">
+                                <a href="{% url 'tournaments:tournament_detail' tournament.pk %}" class="text-decoration-none">
+                                    {{ tournament.name }}
+                                </a>
+                            </h3>
+                            <p class="card-text">{{ tournament.description|truncatewords:30 }}</p>
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="bi bi-calendar"></i> Начало: {{ tournament.start_date|date:"d.m.Y" }}</li>
+                                <li><i class="bi bi-calendar-check"></i> Конец: {{ tournament.end_date|date:"d.m.Y" }}</li>
+                                <li><i class="bi bi-geo-alt"></i> {{ tournament.location }}</li>
+                                <li><i class="bi bi-trophy"></i> Призовой фонд: ${{ tournament.prize_pool }}</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'tournaments:tournament_detail' tournament.pk %}" class="btn btn-primary">
+                                Подробнее
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}
+
+{% if current_tournaments %}
+    <section class="mb-5">
+        <h2 class="mb-4">Текущие турниры</h2>
+        <div class="row">
+            {% for tournament in current_tournaments %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        {% if tournament.image %}
+                            <img src="{{ tournament.image.url }}" class="card-img-top" alt="{{ tournament.name }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h3 class="card-title h5">
+                                <a href="{% url 'tournaments:tournament_detail' tournament.pk %}" class="text-decoration-none">
+                                    {{ tournament.name }}
+                                </a>
+                            </h3>
+                            <p class="card-text">{{ tournament.description|truncatewords:30 }}</p>
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="bi bi-calendar"></i> Начало: {{ tournament.start_date|date:"d.m.Y" }}</li>
+                                <li><i class="bi bi-calendar-check"></i> Конец: {{ tournament.end_date|date:"d.m.Y" }}</li>
+                                <li><i class="bi bi-geo-alt"></i> {{ tournament.location }}</li>
+                                <li><i class="bi bi-trophy"></i> Призовой фонд: ${{ tournament.prize_pool }}</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'tournaments:tournament_detail' tournament.pk %}" class="btn btn-primary">
+                                Подробнее
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}
+
+{% if past_tournaments %}
+    <section>
+        <h2 class="mb-4">Прошедшие турниры</h2>
+        <div class="row">
+            {% for tournament in past_tournaments %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        {% if tournament.image %}
+                            <img src="{{ tournament.image.url }}" class="card-img-top" alt="{{ tournament.name }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h3 class="card-title h5">
+                                <a href="{% url 'tournaments:tournament_detail' tournament.pk %}" class="text-decoration-none">
+                                    {{ tournament.name }}
+                                </a>
+                            </h3>
+                            <p class="card-text">{{ tournament.description|truncatewords:30 }}</p>
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="bi bi-calendar"></i> Начало: {{ tournament.start_date|date:"d.m.Y" }}</li>
+                                <li><i class="bi bi-calendar-check"></i> Конец: {{ tournament.end_date|date:"d.m.Y" }}</li>
+                                <li><i class="bi bi-geo-alt"></i> {{ tournament.location }}</li>
+                                <li><i class="bi bi-trophy"></i> Призовой фонд: ${{ tournament.prize_pool }}</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'tournaments:tournament_detail' tournament.pk %}" class="btn btn-primary">
+                                Подробнее
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}
+
+{% if not upcoming_tournaments and not current_tournaments and not past_tournaments %}
+    <div class="alert alert-info">
+        Турниров пока нет.
+    </div>
+{% endif %}
+{% endblock %} 
