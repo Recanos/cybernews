@@ -23,7 +23,7 @@ CyberNews - это веб-платформа для публикации нов�
 
 1. Клонируйте репозиторий:
 ```bash
-git clone https://github.com/yourusername/cybernews.git
+git clone https://github.com/Recanos/cybernews.git
 cd cybernews
 ```
 
