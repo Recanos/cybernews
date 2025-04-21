@@ -19,28 +19,28 @@
             </div>
         {% endif %}
         
-        {% for news in news_list %}
+        {% for item in news %}
             <div class="card mb-4">
-                {% if news.image %}
-                    <img src="{{ news.image.url }}" class="card-img-top" alt="{{ news.title }}">
+                {% if item.image %}
+                    <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.title }}">
                 {% endif %}
                 <div class="card-body">
                     <h2 class="card-title h4">
-                        <a href="{% url 'news:news_detail' news.pk %}" class="text-decoration-none">
-                            {{ news.title }}
+                        <a href="{% url 'news:news_detail' item.slug %}" class="text-decoration-none">
+                            {{ item.title }}
                         </a>
                     </h2>
-                    <p class="card-text">{{ news.content|truncatewords:50 }}</p>
+                    <p class="card-text">{{ item.content|truncatewords:50 }}</p>
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="text-muted">
                             <small>
-                                <i class="bi bi-calendar"></i> {{ news.created_at|date:"d.m.Y H:i" }}
-                                <i class="bi bi-person ms-2"></i> {{ news.author.username }}
+                                <i class="bi bi-calendar"></i> {{ item.created_at|date:"d.m.Y H:i" }}
+                                <i class="bi bi-person ms-2"></i> {{ item.author.username }}
                             </small>
                         </div>
                         <div>
-                            {% for tag in news.tags.all %}
-                                <a href="{% url 'news:news_list' %}?tag={{ tag.slug }}" class="badge bg-secondary text-decoration-none">
+                            {% for tag in item.tags.all %}
+                                <a href="{% url 'news:news_list_by_tag' tag.slug %}" class="badge bg-secondary text-decoration-none">
                                     {{ tag.name }}
                                 </a>
                             {% endfor %}
@@ -54,23 +54,23 @@
             </div>
         {% endfor %}
         
-        {% if is_paginated %}
+        {% if news.has_other_pages %}
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
+                    {% if news.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if category %}&category={{ category.slug }}{% endif %}{% if tag %}&tag={{ tag.slug }}{% endif %}">
+                            <a class="page-link" href="?page={{ news.previous_page_number }}{% if category %}&category={{ category.slug }}{% endif %}{% if tag %}&tag={{ tag.slug }}{% endif %}">
                                 Предыдущая
                             </a>
                         </li>
                     {% endif %}
                     
-                    {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
+                    {% for num in news.paginator.page_range %}
+                        {% if news.number == num %}
                             <li class="page-item active">
                                 <span class="page-link">{{ num }}</span>
                             </li>
-                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        {% elif num > news.number|add:'-3' and num < news.number|add:'3' %}
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ num }}{% if category %}&category={{ category.slug }}{% endif %}{% if tag %}&tag={{ tag.slug }}{% endif %}">
                                     {{ num }}
@@ -79,9 +79,9 @@
                         {% endif %}
                     {% endfor %}
                     
-                    {% if page_obj.has_next %}
+                    {% if news.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if category %}&category={{ category.slug }}{% endif %}{% if tag %}&tag={{ tag.slug }}{% endif %}">
+                            <a class="page-link" href="?page={{ news.next_page_number }}{% if category %}&category={{ category.slug }}{% endif %}{% if tag %}&tag={{ tag.slug }}{% endif %}">
                                 Следующая
                             </a>
                         </li>
@@ -98,7 +98,7 @@
             </div>
             <div class="list-group list-group-flush">
                 {% for category in categories %}
-                    <a href="{% url 'news:news_list' %}?category={{ category.slug }}" class="list-group-item list-group-item-action {% if category == current_category %}active{% endif %}">
+                    <a href="{% url 'news:news_list_by_category' category.slug %}" class="list-group-item list-group-item-action {% if category == current_category %}active{% endif %}">
                         {{ category.name }}
                     </a>
                 {% endfor %}
@@ -110,8 +110,8 @@
                 <h5 class="card-title mb-0">Популярные теги</h5>
             </div>
             <div class="card-body">
-                {% for tag in popular_tags %}
-                    <a href="{% url 'news:news_list' %}?tag={{ tag.slug }}" class="badge bg-secondary text-decoration-none me-1 mb-1">
+                {% for tag in tags %}
+                    <a href="{% url 'news:news_list_by_tag' tag.slug %}" class="badge bg-secondary text-decoration-none me-1 mb-1">
                         {{ tag.name }}
                     </a>
                 {% endfor %}

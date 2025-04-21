@@ -62,6 +62,7 @@ class Match(models.Model):
     location = models.CharField(max_length=200, default='TBA')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_finished = models.BooleanField(default=False)
 
     class Meta:
         verbose_name_plural = 'matches'
@@ -73,4 +74,5 @@ class Match(models.Model):
     def save(self, *args, **kwargs):
         if self.score_team1 is not None and self.score_team2 is not None:
             self.status = 'completed'
+            self.is_finished = True
         super().save(*args, **kwargs)

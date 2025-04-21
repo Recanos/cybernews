@@ -18,8 +18,8 @@ def tournament_list(request):
         'past_tournaments': past_tournaments,
     })
 
-def tournament_detail(request, slug):
-    tournament = get_object_or_404(Tournament, slug=slug)
+def tournament_detail(request, pk):
+    tournament = get_object_or_404(Tournament, pk=pk)
     matches = tournament.matches.all().order_by('start_time')
     
     return render(request, 'tournaments/tournament_detail.html', {
