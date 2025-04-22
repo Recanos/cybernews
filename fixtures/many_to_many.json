@@ -38,5 +38,37 @@
             "tournament": 1,
             "team": 2
         }
+    },
+    {
+        "model": "tournaments.tournament_teams",
+        "pk": 3,
+        "fields": {
+            "tournament": 1,
+            "team": 3
+        }
+    },
+    {
+        "model": "tournaments.tournament_teams",
+        "pk": 4,
+        "fields": {
+            "tournament": 2,
+            "team": 1
+        }
+    },
+    {
+        "model": "tournaments.tournament_teams",
+        "pk": 5,
+        "fields": {
+            "tournament": 2,
+            "team": 2
+        }
+    },
+    {
+        "model": "tournaments.tournament_teams",
+        "pk": 6,
+        "fields": {
+            "tournament": 2,
+            "team": 3
+        }
     }
 ] 

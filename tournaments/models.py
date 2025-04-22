@@ -11,6 +11,11 @@ class Team(models.Model):
     created_at = models.DateField(default=timezone.now)
     country = models.CharField(max_length=2, default='RU')
     game_type = models.CharField(max_length=50, default='CS2')
+    players_count = models.IntegerField(default=5)
+    rating = models.FloatField(default=0.0)
+    wins = models.IntegerField(default=0)
+    losses = models.IntegerField(default=0)
+    total_matches = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
         if not self.slug:

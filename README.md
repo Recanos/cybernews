@@ -134,12 +134,12 @@ MEDIA_ROOT = BASE_DIR / 'media'
 Для тестирования доступны следующие аккаунты:
 
 1. Администратор:
-   - Логин: admin
+   - Почта: admin@cybernews.com
    - Пароль: admin123
 
-2. Обычный пользователь:
-   - Логин: user
-   - Пароль: user123
+2. Модератора:
+   - Почта: moderator@cybernews.com
+   - Пароль: moderator123
 
 ## Лицензия
 

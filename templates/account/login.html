@@ -1,33 +1,59 @@
-{% extends 'base.html' %}
+{% extends "account/base_entrance.html" %}
+{% load i18n %}
+{% load account %}
 {% load crispy_forms_tags %}
 
-{% block title %}Вход - CyberNews{% endblock %}
+{% block head_title %}{% trans "Войти" %}{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-body">
-                    <h2 class="text-center mb-4">Вход</h2>
-                    <form method="post" action="{% url 'account_login' %}">
-                        {% csrf_token %}
-                        {{ form|crispy }}
-                        {% if redirect_field_value %}
-                        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
-                        {% endif %}
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Войти</button>
-                            <a href="{% url 'account_reset_password' %}" class="btn btn-link">Забыли пароль?</a>
-                        </div>
-                    </form>
-                    <hr>
-                    <div class="text-center">
-                        <p>Нет аккаунта? <a href="{% url 'account_signup' %}">Зарегистрироваться</a></p>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <h2 class="text-center mb-4">{% trans "Войти" %}</h2>
+
+    {% if messages %}
+    <div class="alert alert-info">
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
     </div>
-</div>
+    {% endif %}
+
+    {% if form.errors %}
+    <div class="alert alert-danger">
+        {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger">
+        {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <p class="text-center">
+        {% trans "Если у вас ещё нет учётной записи, пожалуйста, сначала" %}
+        <a href="{{ signup_url }}">{% trans "зарегистрируйтесь" %}</a>.
+    </p>
+
+    <form class="login" method="POST" action="{% url 'account_login' %}">
+        {% csrf_token %}
+        {{ form|crispy }}
+        {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+        {% endif %}
+
+        <div class="d-grid gap-2 mt-4">
+            <button class="btn btn-primary" type="submit">{% trans "Войти" %}</button>
+        </div>
+
+        <div class="text-center mt-3">
+            <a class="text-primary" href="{% url 'account_reset_password' %}">
+                {% trans "Забыли свой пароль?" %}
+            </a>
+        </div>
+    </form>
 {% endblock %} 

@@ -53,7 +53,7 @@
                                 <li class="mb-2">
                                     <i class="bi bi-controller"></i>
                                     <strong>Игра:</strong><br>
-                                    {{ tournament.game }}
+                                    {{ tournament.game_type }}
                                 </li>
                             </ul>
                         </div>
@@ -115,7 +115,7 @@
                                 <tbody>
                                     {% for match in matches %}
                                         <tr>
-                                            <td>{{ match.date|date:"d.m.Y H:i" }}</td>
+                                            <td>{{ match.start_time|date:"d.m.Y H:i" }}</td>
                                             <td>
                                                 <a href="{% url 'tournaments:team_detail' match.team1.pk %}" class="text-decoration-none">
                                                     {{ match.team1.name }}
@@ -123,7 +123,7 @@
                                             </td>
                                             <td>
                                                 {% if match.status == 'completed' %}
-                                                    {{ match.team1_score }} - {{ match.team2_score }}
+                                                    {{ match.score_team1 }} - {{ match.score_team2 }}
                                                 {% else %}
                                                     -
                                                 {% endif %}

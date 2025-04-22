@@ -46,8 +46,8 @@
                             <ul class="list-unstyled">
                                 <li class="mb-2">
                                     <i class="bi bi-people"></i>
-                                    <strong>Состав:</strong><br>
-                                    {{ team.players.count }} игроков
+                                    <strong>Игроков:</strong><br>
+                                    {{ team.players_count }}
                                 </li>
                                 <li class="mb-2">
                                     <i class="bi bi-star"></i>
@@ -114,7 +114,7 @@
                                 <tbody>
                                     {% for match in upcoming_matches %}
                                         <tr>
-                                            <td>{{ match.date|date:"d.m.Y H:i" }}</td>
+                                            <td>{{ match.start_time|date:"d.m.Y H:i" }}</td>
                                             <td>
                                                 <a href="{% url 'tournaments:tournament_detail' match.tournament.pk %}" class="text-decoration-none">
                                                     {{ match.tournament.name }}
@@ -161,7 +161,7 @@
                                 <tbody>
                                     {% for match in past_matches %}
                                         <tr>
-                                            <td>{{ match.date|date:"d.m.Y H:i" }}</td>
+                                            <td>{{ match.start_time|date:"d.m.Y H:i" }}</td>
                                             <td>
                                                 <a href="{% url 'tournaments:tournament_detail' match.tournament.pk %}" class="text-decoration-none">
                                                     {{ match.tournament.name }}
@@ -180,24 +180,24 @@
                                             </td>
                                             <td>
                                                 {% if match.team1 == team %}
-                                                    {{ match.team1_score }} - {{ match.team2_score }}
+                                                    {{ match.score_team1 }} - {{ match.score_team2 }}
                                                 {% else %}
-                                                    {{ match.team2_score }} - {{ match.team1_score }}
+                                                    {{ match.score_team2 }} - {{ match.score_team1 }}
                                                 {% endif %}
                                             </td>
                                             <td>
                                                 {% if match.team1 == team %}
-                                                    {% if match.team1_score > match.team2_score %}
+                                                    {% if match.score_team1 > match.score_team2 %}
                                                         <span class="badge bg-success">Победа</span>
-                                                    {% elif match.team1_score < match.team2_score %}
+                                                    {% elif match.score_team1 < match.score_team2 %}
                                                         <span class="badge bg-danger">Поражение</span>
                                                     {% else %}
                                                         <span class="badge bg-secondary">Ничья</span>
                                                     {% endif %}
                                                 {% else %}
-                                                    {% if match.team2_score > match.team1_score %}
+                                                    {% if match.score_team2 > match.score_team1 %}
                                                         <span class="badge bg-success">Победа</span>
-                                                    {% elif match.team2_score < match.team1_score %}
+                                                    {% elif match.score_team2 < match.score_team1 %}
                                                         <span class="badge bg-danger">Поражение</span>
                                                     {% else %}
                                                         <span class="badge bg-secondary">Ничья</span>

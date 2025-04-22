@@ -30,6 +30,12 @@ def news_detail(request, slug):
     news = get_object_or_404(News, slug=slug, is_published=True)
     comments = news.comments.filter(is_approved=True)
     
+    # Получаем похожие новости (из той же категории и с общими тегами)
+    similar_news = News.objects.filter(
+        is_published=True,
+        category=news.category
+    ).exclude(id=news.id)[:5]
+    
     if request.method == 'POST':
         comment_form = CommentForm(request.POST)
         if comment_form.is_valid():
@@ -42,10 +48,15 @@ def news_detail(request, slug):
     else:
         comment_form = CommentForm()
     
+    # Получаем популярные теги
+    popular_tags = Tag.objects.all()
+    
     return render(request, 'news/news_detail.html', {
         'news': news,
         'comments': comments,
         'comment_form': comment_form,
+        'popular_tags': popular_tags,
+        'similar_news': similar_news,
     })
 
 @login_required
