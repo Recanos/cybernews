@@ -70,5 +70,61 @@
             "tournament": 2,
             "team": 3
         }
+    },
+    {
+        "model": "news.news_tags",
+        "pk": 4,
+        "fields": {
+            "news": 3,
+            "tag": 1
+        }
+    },
+    {
+        "model": "news.news_tags",
+        "pk": 5,
+        "fields": {
+            "news": 3,
+            "tag": 4
+        }
+    },
+    {
+        "model": "news.news_tags",
+        "pk": 6,
+        "fields": {
+            "news": 4,
+            "tag": 2
+        }
+    },
+    {
+        "model": "news.news_tags",
+        "pk": 7,
+        "fields": {
+            "news": 4,
+            "tag": 4
+        }
+    },
+    {
+        "model": "news.news_tags",
+        "pk": 8,
+        "fields": {
+            "news": 4,
+            "tag": 7
+        }
+    },
+    {
+        "model": "news.news_tags",
+        "pk": 9,
+        "fields": {
+            "news": 5,
+            "tag": 5
+        }
+    },
+    {
+        "model": "news.news_tags",
+        "pk": 10,
+        "fields": {
+            "news": 5,
+            "tag": 6
+        }
     }
 ] 

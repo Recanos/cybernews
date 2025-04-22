@@ -102,6 +102,38 @@
         }
     },
     {
+        "model": "news.tag",
+        "pk": 4,
+        "fields": {
+            "name": "Valve",
+            "slug": "valve"
+        }
+    },
+    {
+        "model": "news.tag",
+        "pk": 5,
+        "fields": {
+            "name": "Riot Games",
+            "slug": "riot-games"
+        }
+    },
+    {
+        "model": "news.tag",
+        "pk": 6,
+        "fields": {
+            "name": "Project A",
+            "slug": "project-a"
+        }
+    },
+    {
+        "model": "news.tag",
+        "pk": 7,
+        "fields": {
+            "name": "Pro Circuit",
+            "slug": "pro-circuit"
+        }
+    },
+    {
         "model": "news.news",
         "pk": 1,
         "fields": {

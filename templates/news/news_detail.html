@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load news_tags %}
 
 
 {% block title %}{{ news.title }} - CyberNews{% endblock %}
@@ -27,20 +28,60 @@
             
             <div class="mb-4">
                 {% for tag in news.tags.all %}
-                    <a href="{% url 'news:news_list' %}?tag={{ tag.slug }}" class="badge bg-secondary text-decoration-none">
+                    <a href="{% url 'news:news_list_by_tag' tag.slug %}" class="badge bg-secondary text-decoration-none">
                         {{ tag.name }}
                     </a>
                 {% endfor %}
             </div>
+            
+            <div class="mb-4">
+                <span class="text-muted">
+                    <i class="bi bi-eye"></i> {{ news.views_count }}
+                </span>
+            </div>
+            
+            {% if user.is_authenticated %}
+            <div class="mb-4">
+                <h5>Оцените статью:</h5>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-sm btn-outline-danger like-news-btn me-2" data-news-slug="{{ news.slug }}" title="Нравится">
+                        <i class="bi bi-heart{% if news|has_liked:user %}-fill text-danger{% endif %}"></i>
+                        <span class="likes-count">{{ news.get_likes_count }}</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary dislike-news-btn me-2" data-news-slug="{{ news.slug }}" title="Не нравится">
+                        <i class="bi bi-hand-thumbs-down{% if news|has_disliked:user %}-fill text-danger{% endif %}"></i>
+                        <span class="dislikes-count">{{ news.get_dislikes_count }}</span>
+                    </button>
+                </div>
+            </div>
+            {% endif %}
         </article>
         
         <section class="comments">
-            <h2 class="mb-4">Комментарии</h2>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Комментарии ({{ news.get_comments_count }})</h2>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortCommentsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if sort_comments == 'newest' %}
+                            Сначала новые
+                        {% elif sort_comments == 'oldest' %}
+                            Сначала старые
+                        {% elif sort_comments == 'popular' %}
+                            Самые популярные
+                        {% endif %}
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="sortCommentsDropdown">
+                        <li><a class="dropdown-item {% if sort_comments == 'newest' %}active{% endif %}" href="?sort_comments=newest">Сначала новые</a></li>
+                        <li><a class="dropdown-item {% if sort_comments == 'oldest' %}active{% endif %}" href="?sort_comments=oldest">Сначала старые</a></li>
+                        <li><a class="dropdown-item {% if sort_comments == 'popular' %}active{% endif %}" href="?sort_comments=popular">Самые популярные</a></li>
+                    </ul>
+                </div>
+            </div>
             
             {% if user.is_authenticated %}
-                <form method="post" action="{% url 'news:add_comment' news.pk %}" class="mb-4">
+                <form method="post" action="{% url 'news:add_comment' news.slug %}" class="mb-4">
                     {% csrf_token %}
-                    {{ form.as_p }}
+                    {{ comment_form.as_p }}
                     <button type="submit" class="btn btn-primary">Отправить</button>
                 </form>
             {% else %}
@@ -50,19 +91,9 @@
             {% endif %}
             
             {% for comment in comments %}
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div>
-                                <strong>{{ comment.author.username }}</strong>
-                                <small class="text-muted ms-2">
-                                    {{ comment.created_at|date:"d.m.Y H:i" }}
-                                </small>
-                            </div>
-                        </div>
-                        <p class="card-text">{{ comment.content|linebreaks }}</p>
-                    </div>
-                </div>
+                {% if not comment.parent %}
+                    {% include 'news/includes/comment.html' with comment=comment is_reply=False %}
+                {% endif %}
             {% empty %}
                 <div class="alert alert-info">
                     Комментариев пока нет.
@@ -78,7 +109,7 @@
             </div>
             <div class="list-group list-group-flush">
                 {% for similar_news in similar_news %}
-                    <a href="{% url 'news:news_detail' similar_news.slug %}" class="list-group-item list-group-item-action">
+                    <a href="{% url 'news:news_list_by_tag' similar_news.slug %}" class="list-group-item list-group-item-action">
                         {{ similar_news.title }}
                     </a>
                 {% empty %}
@@ -95,12 +126,298 @@
             </div>
             <div class="card-body">
                 {% for tag in popular_tags %}
-                    <a href="{% url 'news:news_list' %}?tag={{ tag.slug }}" class="badge bg-secondary text-decoration-none me-1 mb-1">
+                    <a href="{% url 'news:news_list_by_tag' tag.slug %}" class="badge bg-secondary text-decoration-none me-1 mb-1">
                         {{ tag.name }}
                     </a>
+                {% empty %}
+                    <p class="text-muted">Теги отсутствуют</p>
                 {% endfor %}
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'news:news_list' %}" class="btn btn-sm btn-outline-primary">Все новости</a>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Обработка лайков для новости
+    document.querySelectorAll('.like-news-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const newsSlug = this.dataset.newsSlug;
+            fetch(`/news/${newsSlug}/like/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const heartIcon = this.querySelector('i');
+                const likesCount = this.querySelector('.likes-count');
+                const dislikeBtn = document.querySelector('.dislike-news-btn');
+                const dislikeIcon = dislikeBtn.querySelector('i');
+                const dislikesCount = dislikeBtn.querySelector('.dislikes-count');
+                
+                if (data.liked) {
+                    heartIcon.classList.remove('bi-heart');
+                    heartIcon.classList.add('bi-heart-fill', 'text-danger');
+                } else {
+                    heartIcon.classList.remove('bi-heart-fill', 'text-danger');
+                    heartIcon.classList.add('bi-heart');
+                }
+                
+                likesCount.textContent = data.likes_count;
+                dislikesCount.textContent = data.dislikes_count;
+                
+                // Обновляем состояние кнопки дизлайка
+                if (data.dislikes_count === 0) {
+                    dislikeIcon.classList.remove('bi-hand-thumbs-down-fill', 'text-danger');
+                    dislikeIcon.classList.add('bi-hand-thumbs-down');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при обработке лайка');
+            });
+        });
+    });
+
+    // Обработка дизлайков для новости
+    document.querySelectorAll('.dislike-news-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const newsSlug = this.dataset.newsSlug;
+            fetch(`/news/${newsSlug}/dislike/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const likeBtn = document.querySelector('.like-news-btn');
+                const likeIcon = likeBtn.querySelector('i');
+                const likeCount = likeBtn.querySelector('.likes-count');
+                const dislikeIcon = this.querySelector('i');
+                const dislikeCount = this.querySelector('.dislikes-count');
+
+                // Обновляем состояние кнопки дизлайка
+                if (data.disliked) {
+                    dislikeIcon.classList.add('bi-hand-thumbs-down-fill', 'text-danger');
+                    dislikeIcon.classList.remove('bi-hand-thumbs-down');
+                } else {
+                    dislikeIcon.classList.remove('bi-hand-thumbs-down-fill', 'text-danger');
+                    dislikeIcon.classList.add('bi-hand-thumbs-down');
+                }
+
+                // Обновляем счетчики
+                dislikeCount.textContent = data.dislikes_count;
+                likeCount.textContent = data.likes_count;
+
+                // Обновляем состояние кнопки лайка
+                if (data.likes_count === 0) {
+                    likeIcon.classList.remove('bi-heart-fill', 'text-danger');
+                    likeIcon.classList.add('bi-heart');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при обработке дизлайка');
+            });
+        });
+    });
+
+    // Обработка кнопки "Ответить"
+    document.querySelectorAll('.reply-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            const replyForm = document.getElementById(`reply-form-${commentId}`);
+            replyForm.style.display = 'block';
+            this.style.display = 'none';
+        });
+    });
+
+    // Обработка кнопки "Отмена" для ответов
+    document.querySelectorAll('.cancel-reply').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            const replyForm = document.getElementById(`reply-form-${commentId}`);
+            const replyBtn = document.querySelector(`.reply-btn[data-comment-id="${commentId}"]`);
+            replyForm.style.display = 'none';
+            replyBtn.style.display = 'inline-block';
+        });
+    });
+
+    // Обработка кнопки "Редактировать"
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            const editForm = document.getElementById(`edit-form-${commentId}`);
+            const commentContent = document.getElementById(`comment-content-${commentId}`);
+            editForm.style.display = 'block';
+            commentContent.style.display = 'none';
+            this.style.display = 'none';
+        });
+    });
+
+    // Обработка кнопки "Отмена" для редактирования
+    document.querySelectorAll('.cancel-edit').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            const editForm = document.getElementById(`edit-form-${commentId}`);
+            const commentContent = document.getElementById(`comment-content-${commentId}`);
+            const editBtn = document.querySelector(`.edit-btn[data-comment-id="${commentId}"]`);
+            editForm.style.display = 'none';
+            commentContent.style.display = 'block';
+            editBtn.style.display = 'inline-block';
+        });
+    });
+
+    // Обработка форм редактирования
+    document.querySelectorAll('.edit-form form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const commentId = this.querySelector('.cancel-edit').dataset.commentId;
+            const content = this.querySelector('textarea').value;
+
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `content=${encodeURIComponent(content)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const commentContent = document.getElementById(`comment-content-${commentId}`);
+                    const editForm = document.getElementById(`edit-form-${commentId}`);
+                    const editBtn = document.querySelector(`.edit-btn[data-comment-id="${commentId}"]`);
+                    
+                    commentContent.querySelector('p').innerHTML = data.content.replace(/\n/g, '<br>');
+                    editForm.style.display = 'none';
+                    commentContent.style.display = 'block';
+                    editBtn.style.display = 'inline-block';
+                } else {
+                    alert(data.error || 'Произошла ошибка при редактировании комментария');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при редактировании комментария');
+            });
+        });
+    });
+
+    // Обработка лайков для комментариев
+    document.querySelectorAll('.like-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            fetch(`/comment/${commentId}/like/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const heartIcon = this.querySelector('i');
+                const likesCount = this.querySelector('.likes-count');
+                const dislikeBtn = this.parentElement.querySelector('.dislike-btn');
+                const dislikeIcon = dislikeBtn.querySelector('i');
+                const dislikesCount = dislikeBtn.querySelector('.dislikes-count');
+                
+                if (data.liked) {
+                    heartIcon.classList.remove('bi-heart');
+                    heartIcon.classList.add('bi-heart-fill', 'text-danger');
+                } else {
+                    heartIcon.classList.remove('bi-heart-fill', 'text-danger');
+                    heartIcon.classList.add('bi-heart');
+                }
+                
+                likesCount.textContent = data.likes_count;
+                dislikesCount.textContent = data.dislikes_count;
+                
+                // Обновляем состояние кнопки дизлайка
+                if (data.dislikes_count === 0) {
+                    dislikeIcon.classList.remove('bi-hand-thumbs-down-fill', 'text-danger');
+                    dislikeIcon.classList.add('bi-hand-thumbs-down');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при обработке лайка');
+            });
+        });
+    });
+
+    // Обработка дизлайков для комментариев
+    document.querySelectorAll('.dislike-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            fetch(`/comment/${commentId}/dislike/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const likeBtn = this.parentElement.querySelector('.like-btn');
+                const likeIcon = likeBtn.querySelector('i');
+                const likeCount = likeBtn.querySelector('.likes-count');
+                const dislikeIcon = this.querySelector('i');
+                const dislikeCount = this.querySelector('.dislikes-count');
+
+                // Обновляем состояние кнопки дизлайка
+                if (data.disliked) {
+                    dislikeIcon.classList.add('bi-hand-thumbs-down-fill', 'text-danger');
+                    dislikeIcon.classList.remove('bi-hand-thumbs-down');
+                } else {
+                    dislikeIcon.classList.remove('bi-hand-thumbs-down-fill', 'text-danger');
+                    dislikeIcon.classList.add('bi-hand-thumbs-down');
+                }
+
+                // Обновляем счетчики
+                dislikeCount.textContent = data.dislikes_count;
+                likeCount.textContent = data.likes_count;
+
+                // Обновляем состояние кнопки лайка
+                if (data.likes_count === 0) {
+                    likeIcon.classList.remove('bi-heart-fill', 'text-danger');
+                    likeIcon.classList.add('bi-heart');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при обработке дизлайка');
+            });
+        });
+    });
+});
+</script>
 {% endblock %} 

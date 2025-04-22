@@ -52,22 +52,21 @@ python3 manage.py migrate
 ```
 Это создаст необходимые таблицы в базе данных.
 
-6. Создайте суперпользователя:
+6. (Опционально) Загрузка тестовых данных:
 ```bash
-python3 manage.py createsuperuser
-```
-Следуйте инструкциям в консоли для создания администратора сайта.
-
-7. (Опционально) Загрузка тестовых данных:
-```bash
-python3 manage.py loaddata fixtures/initial_data.json
-python3 manage.py loaddata fixtures/many_to_many.json
+python3 manage.py loaddata fixtures/initial_data.json fixtures/many_to_many.json
 ```
 Это загрузит тестовые данные, включая:
 - Тестовые аккаунты пользователей
 - Примеры новостей
 - Примеры турниров и матчей
 ⚠️ Внимание: загрузка тестовых данных перезапишет существующие данные в базе.
+
+7. Создайте суперпользователя:
+```bash
+python3 manage.py createsuperuser
+```
+Следуйте инструкциям в консоли для создания администратора сайта.
 
 8. Запустите сервер разработки:
 ```bash
@@ -134,10 +133,12 @@ MEDIA_ROOT = BASE_DIR / 'media'
 Для тестирования доступны следующие аккаунты:
 
 1. Администратор:
+   - Логин: admin
    - Почта: admin@cybernews.com
    - Пароль: admin123
 
-2. Модератора:
+2. Модератор:
+   - Логин: moderator
    - Почта: moderator@cybernews.com
    - Пароль: moderator123
 

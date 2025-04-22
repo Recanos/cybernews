@@ -7,18 +7,6 @@
     <div class="col-md-8">
         <h1 class="mb-4">Новости</h1>
         
-        {% if category %}
-            <div class="alert alert-info">
-                Категория: {{ category.name }}
-            </div>
-        {% endif %}
-        
-        {% if tag %}
-            <div class="alert alert-info">
-                Тег: {{ tag.name }}
-            </div>
-        {% endif %}
-        
         {% for item in news %}
             <div class="card mb-4">
                 {% if item.image %}
@@ -111,10 +99,13 @@
             </div>
             <div class="card-body">
                 {% for tag in tags %}
-                    <a href="{% url 'news:news_list_by_tag' tag.slug %}" class="badge bg-secondary text-decoration-none me-1 mb-1">
+                    <a href="{% url 'news:news_list_by_tag' tag.slug %}" class="badge {% if tag == current_tag %}bg-primary{% else %}bg-secondary{% endif %} text-decoration-none me-1 mb-1">
                         {{ tag.name }}
                     </a>
                 {% endfor %}
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'news:news_list' %}" class="btn btn-sm btn-outline-primary">Все новости</a>
             </div>
         </div>
     </div>

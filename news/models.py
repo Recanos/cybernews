@@ -42,6 +42,8 @@ class News(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_published = models.BooleanField(default=False)
     views_count = models.PositiveIntegerField(default=0)
+    likes = models.ManyToManyField(User, related_name='liked_news', blank=True)
+    dislikes = models.ManyToManyField(User, related_name='disliked_news', blank=True)
 
     class Meta:
         verbose_name_plural = 'news'
@@ -55,15 +57,53 @@ class News(models.Model):
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
 
+    def get_likes_count(self):
+        return self.likes.count()
+
+    def get_dislikes_count(self):
+        return self.dislikes.count()
+
+    def get_comments_count(self):
+        return self.comments.count()
+
+    def has_user_liked(self, user):
+        if not user or not user.is_authenticated:
+            return False
+        return self.likes.filter(id=user.id).exists()
+
+    def has_user_disliked(self, user):
+        if not user or not user.is_authenticated:
+            return False
+        return self.dislikes.filter(id=user.id).exists()
+
 class Comment(models.Model):
     news = models.ForeignKey(News, on_delete=models.CASCADE, related_name='comments')
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    is_approved = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=True)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+    likes = models.ManyToManyField(User, related_name='liked_comments', blank=True)
+    dislikes = models.ManyToManyField(User, related_name='disliked_comments', blank=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['created_at']
 
     def __str__(self):
         return f'Comment by {self.author.username} on {self.news.title}'
+
+    def get_likes_count(self):
+        return self.likes.count()
+
+    def get_dislikes_count(self):
+        return self.dislikes.count()
+
+    def has_user_liked(self, user):
+        if not user or not user.is_authenticated:
+            return False
+        return self.likes.filter(id=user.id).exists()
+
+    def has_user_disliked(self, user):
+        if not user or not user.is_authenticated:
+            return False
+        return self.dislikes.filter(id=user.id).exists()
