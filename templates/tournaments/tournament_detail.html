@@ -8,12 +8,21 @@
 {% block content %}
 <div class="row">
     <div class="col-md-8">
-        <article>
-            <h1 class="mb-4">{{ tournament.name }}</h1>
-            
-            {% if tournament.image %}
-                <img src="{{ tournament.image.url }}" class="img-fluid mb-4" alt="{{ tournament.name }}">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="card-title h2 mb-0">{{ tournament.name }}</h1>
+                    {% if user.is_staff or user.is_superuser %}
+                    <div class="btn-group">
+                        <a href="{% url 'tournaments:edit_tournament' tournament.pk %}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Редактировать
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteTournamentModal">
+                            <i class="bi bi-trash"></i> Удалить
+                        </button>
+                    </div>
             {% endif %}
+                </div>
             
             <div class="card mb-4">
                 <div class="card-body">
@@ -70,10 +79,38 @@
                 </div>
             </div>
             
-            {% if tournament.teams.exists %}
                 <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h2 class="card-title h4 mb-0">Участники</h2>
+                        {% if user.is_staff or user.is_superuser %}
+                        <div class="btn-group">
+                            <div class="dropdown">
+                                <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="addTeamDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-plus-lg"></i> Добавить команду
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="addTeamDropdown">
+                                    {% for team in active_teams %}
+                                        {% if team not in tournament.teams.all %}
+                                            <li>
+                                                <form method="post" action="{% url 'tournaments:add_team_to_tournament' tournament.pk team.pk %}" class="dropdown-item">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-link text-decoration-none p-0">
+                                                        {{ team.name }}
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <a href="{% url 'tournaments:create_team' %}" class="btn btn-success btn-sm">
+                                <i class="bi bi-plus-lg"></i> Создать команду
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
                     <div class="card-body">
-                        <h2 class="card-title h4 mb-4">Участники</h2>
+                        {% if tournament.teams.exists %}
                         <div class="row">
                             {% for team in tournament.teams.all %}
                                 <div class="col-md-4 mb-3">
@@ -82,56 +119,83 @@
                                             <img src="{{ team.logo.url }}" class="card-img-top" alt="{{ team.name }}">
                                         {% endif %}
                                         <div class="card-body">
-                                            <h3 class="card-title h5">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <h3 class="card-title h5 mb-0">
                                                 <a href="{% url 'tournaments:team_detail' team.pk %}" class="text-decoration-none">
                                                     {{ team.name }}
                                                 </a>
                                             </h3>
+                                                    {% if user.is_staff or user.is_superuser %}
+                                                    <form method="post" action="{% url 'tournaments:remove_team_from_tournament' tournament.pk team.pk %}" class="d-inline">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Удалить из турнира">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+                                                    </form>
+                                                    {% endif %}
+                                                </div>
                                             <p class="card-text">{{ team.description|truncatewords:20 }}</p>
                                         </div>
                                     </div>
                                 </div>
                             {% endfor %}
                         </div>
+                        {% else %}
+                            <div class="alert alert-info mb-0">
+                                В турнире пока нет участников. {% if user.is_staff or user.is_superuser %}Добавьте команды, используя кнопки выше.{% else %}Следите за обновлениями.{% endif %}
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="card-title h4 mb-0">Матчи</h2>
+                {% if user.is_staff or user.is_superuser %}
+                <a href="{% url 'tournaments:create_match' %}?tournament={{ tournament.pk }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg"></i> Добавить матч
+                </a>
             {% endif %}
-            
-            {% if matches %}
-                <div class="card">
+            </div>
                     <div class="card-body">
-                        <h2 class="card-title h4 mb-4">Матчи</h2>
                         <div class="table-responsive">
                             <table class="table">
                                 <thead>
                                     <tr>
-                                        <th>Дата</th>
+                                <th>Начало</th>
+                                <th>Окончание</th>
                                         <th>Команда 1</th>
+                                <th>Команда 2</th>
                                         <th>Счет</th>
-                                        <th>Команда 2</th>
                                         <th>Статус</th>
+                                {% if user.is_staff or user.is_superuser %}
+                                <th>Действия</th>
+                                {% endif %}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for match in matches %}
                                         <tr>
                                             <td>{{ match.start_time|date:"d.m.Y H:i" }}</td>
+                                <td>{{ match.end_time|date:"d.m.Y H:i"|default:"-" }}</td>
                                             <td>
                                                 <a href="{% url 'tournaments:team_detail' match.team1.pk %}" class="text-decoration-none">
                                                     {{ match.team1.name }}
                                                 </a>
                                             </td>
                                             <td>
-                                                {% if match.status == 'completed' %}
+                                    <a href="{% url 'tournaments:team_detail' match.team2.pk %}" class="text-decoration-none">
+                                        {{ match.team2.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if match.score_team1 is not None and match.score_team2 is not None %}
                                                     {{ match.score_team1 }} - {{ match.score_team2 }}
                                                 {% else %}
                                                     -
                                                 {% endif %}
-                                            </td>
-                                            <td>
-                                                <a href="{% url 'tournaments:team_detail' match.team2.pk %}" class="text-decoration-none">
-                                                    {{ match.team2.name }}
-                                                </a>
                                             </td>
                                             <td>
                                                 {% if match.status == 'scheduled' %}
@@ -140,8 +204,51 @@
                                                     <span class="badge bg-warning">В процессе</span>
                                                 {% elif match.status == 'completed' %}
                                                     <span class="badge bg-success">Завершен</span>
+                                    {% elif match.status == 'cancelled' %}
+                                        <span class="badge bg-danger">Отменен</span>
                                                 {% endif %}
                                             </td>
+                                {% if user.is_staff or user.is_superuser %}
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{% url 'tournaments:edit_match' match.pk %}" class="btn btn-outline-primary btn-sm" title="Редактировать">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteMatchModal{{ match.pk }}" title="Удалить">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Modal для подтверждения удаления матча -->
+                                    <div class="modal fade" id="deleteMatchModal{{ match.pk }}" tabindex="-1" aria-labelledby="deleteMatchModalLabel{{ match.pk }}" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="deleteMatchModalLabel{{ match.pk }}">Подтверждение удаления</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Вы уверены, что хотите удалить матч между командами "{{ match.team1.name }}" и "{{ match.team2.name }}"?</p>
+                                                    <p class="text-danger">Это действие нельзя будет отменить.</p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                                    <form action="{% url 'tournaments:delete_match' match.pk %}" method="post" class="d-inline">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-danger">Удалить</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="{% if user.is_staff or user.is_superuser %}7{% else %}6{% endif %}" class="text-center text-muted">
+                                    Матчи пока не добавлены
+                                </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -149,42 +256,50 @@
                         </div>
                     </div>
                 </div>
-            {% endif %}
-        </article>
     </div>
     
     <div class="col-md-4">
-        <div class="card mb-4">
+        <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">Быстрые ссылки</h5>
+                <h5 class="card-title mb-0">Текущие турниры</h5>
             </div>
             <div class="list-group list-group-flush">
-                <a href="{% url 'tournaments:match_schedule' %}" class="list-group-item list-group-item-action">
-                    <i class="bi bi-calendar-event"></i> Расписание матчей
-                </a>
-                <a href="{% url 'tournaments:match_results' %}" class="list-group-item list-group-item-action">
-                    <i class="bi bi-trophy"></i> Результаты матчей
-                </a>
-                <a href="{% url 'tournaments:tournament_list' %}" class="list-group-item list-group-item-action">
+                {% for tournament in active_tournaments %}
+                    <a href="{% url 'tournaments:tournament_detail' tournament.pk %}" class="list-group-item list-group-item-action">
+                        {{ tournament.name }}
+                    </a>
+                {% empty %}
+                    <div class="list-group-item text-muted">
+                        Текущих турниров пока нет
+                    </div>
+                {% endfor %}
+                <a href="{% url 'tournaments:tournament_list' %}" class="list-group-item list-group-item-action text-center">
                     <i class="bi bi-list"></i> Все турниры
                 </a>
             </div>
         </div>
-        
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Другие турниры</h5>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения удаления турнира -->
+<div class="modal fade" id="deleteTournamentModal" tabindex="-1" aria-labelledby="deleteTournamentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteTournamentModalLabel">Удаление турнира</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="list-group list-group-flush">
-                {% for other_tournament in other_tournaments %}
-                    <a href="{% url 'tournaments:tournament_detail' other_tournament.pk %}" class="list-group-item list-group-item-action">
-                        {{ other_tournament.name }}
-                    </a>
-                {% empty %}
-                    <div class="list-group-item text-muted">
-                        Других турниров пока нет
-                    </div>
-                {% endfor %}
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить турнир "{{ tournament.name }}"?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <form method="post" action="{% url 'tournaments:delete_tournament' tournament.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Удалить
+                    </button>
+                </form>
             </div>
         </div>
     </div>

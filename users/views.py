@@ -26,14 +26,14 @@ def profile_edit(request):
     
     return render(request, 'users/profile_edit.html', {
         'form': form,
+        'profile': request.user.profile,
     })
 
 @login_required
-def favorites(request):
-    # TODO: Implement favorites functionality
-    return render(request, 'users/favorites.html')
-
-@login_required
-def view_history(request):
-    # TODO: Implement view history functionality
-    return render(request, 'users/view_history.html')
+def delete_profile(request):
+    if request.method == 'POST':
+        user = request.user
+        user.delete()
+        messages.success(request, 'Ваш профиль был успешно удален.')
+        return redirect('news:news_list')
+    return redirect('users:profile')

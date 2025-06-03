@@ -13,7 +13,7 @@
         {% if can_confirm %}
             <p class="text-center">
                 {% blocktrans with email=confirmation.email_address.email %}
-                    Пожалуйста, подтвердите, что <strong>{{ email }}</strong> - это ваш email адрес.
+                    Пожалуйста, подтвердите, что <strong>{{ email }}</strong> - это Ваш email адрес.
                 {% endblocktrans %}
             </p>
             <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load news_tags %}
 
 
@@ -9,12 +10,31 @@
 <div class="row">
     <div class="col-md-8">
         <article>
-            <h1 class="mb-4">{{ news.title }}</h1>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>{{ news.title }}</h1>
+                {% if user.is_staff or user.is_superuser %}
+                    <div class="btn-group">
+                        <a href="{% url 'news:edit_news' news.slug %}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Редактировать
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteNewsModal">
+                            <i class="bi bi-trash"></i> Удалить
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
             
             <div class="mb-4">
                 <span class="text-muted">
                     <i class="bi bi-calendar"></i> {{ news.created_at|date:"d.m.Y H:i" }}
-                    <i class="bi bi-person ms-2"></i> {{ news.author.username }}
+                    <span class="ms-2">
+                        {% if news.author.profile.avatar %}
+                            <img src="{{ news.author.profile.avatar.url }}" alt="{{ news.author.profile.nickname|default:news.author.username }}" class="rounded-circle" style="width: 20px; height: 20px; object-fit: cover;">
+                        {% else %}
+                            <img src="{% static 'images/default-avatar.png' %}" alt="{{ news.author.profile.nickname|default:news.author.username }}" class="rounded-circle" style="width: 20px; height: 20px; object-fit: cover;">
+                        {% endif %}
+                        {{ news.author.profile.nickname|default:news.author.username }} ({{ news.author.username }})
+                    </span>
                 </span>
             </div>
             
@@ -27,6 +47,10 @@
             </div>
             
             <div class="mb-4">
+                <span class="badge bg-info text-dark">
+                    <i class="bi bi-folder"></i>
+                    <a href="{% url 'news:news_list_by_category' news.category.slug %}" class="text-decoration-none text-dark">{{ news.category.name }}</a>
+                </span>
                 {% for tag in news.tags.all %}
                     <a href="{% url 'news:news_list_by_tag' tag.slug %}" class="badge bg-secondary text-decoration-none">
                         {{ tag.name }}
@@ -35,15 +59,14 @@
             </div>
             
             <div class="mb-4">
-                <span class="text-muted">
-                    <i class="bi bi-eye"></i> {{ news.views_count }}
-                </span>
-            </div>
-            
-            {% if user.is_authenticated %}
-            <div class="mb-4">
-                <h5>Оцените статью:</h5>
                 <div class="d-flex align-items-center">
+                    <span class="me-3">
+                        <i class="bi bi-eye"></i> {{ news.views_count }}
+                    </span>
+                    <span class="me-3">
+                        <i class="bi bi-chat"></i> {{ news.get_comments_count }}
+                    </span>
+                    {% if user.is_authenticated %}
                     <button class="btn btn-sm btn-outline-danger like-news-btn me-2" data-news-slug="{{ news.slug }}" title="Нравится">
                         <i class="bi bi-heart{% if news|has_liked:user %}-fill text-danger{% endif %}"></i>
                         <span class="likes-count">{{ news.get_likes_count }}</span>
@@ -52,9 +75,16 @@
                         <i class="bi bi-hand-thumbs-down{% if news|has_disliked:user %}-fill text-danger{% endif %}"></i>
                         <span class="dislikes-count">{{ news.get_dislikes_count }}</span>
                     </button>
+                    {% else %}
+                        <span class="me-3">
+                            <i class="bi bi-heart"></i> {{ news.get_likes_count }}
+                        </span>
+                        <span class="me-3">
+                            <i class="bi bi-hand-thumbs-down"></i> {{ news.get_dislikes_count }}
+                        </span>
+                    {% endif %}
                 </div>
             </div>
-            {% endif %}
         </article>
         
         <section class="comments">
@@ -103,13 +133,13 @@
     </div>
     
     <div class="col-md-4">
-        <div class="card mb-4">
+        <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">Похожие новости</h5>
             </div>
             <div class="list-group list-group-flush">
                 {% for similar_news in similar_news %}
-                    <a href="{% url 'news:news_list_by_tag' similar_news.slug %}" class="list-group-item list-group-item-action">
+                    <a href="{% url 'news:news_detail' similar_news.slug %}" class="list-group-item list-group-item-action">
                         {{ similar_news.title }}
                     </a>
                 {% empty %}
@@ -117,28 +147,37 @@
                         Похожих новостей нет
                     </div>
                 {% endfor %}
+                <a href="{% url 'news:news_list' %}" class="list-group-item list-group-item-action text-center">
+                    <i class="bi bi-list"></i> Все новости
+                </a>
+            </div>
+        </div>
             </div>
         </div>
         
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Популярные теги</h5>
+{% if user.is_staff or user.is_superuser %}
+<!-- Delete News Modal -->
+<div class="modal fade" id="deleteNewsModal" tabindex="-1" aria-labelledby="deleteNewsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteNewsModalLabel">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="card-body">
-                {% for tag in popular_tags %}
-                    <a href="{% url 'news:news_list_by_tag' tag.slug %}" class="badge bg-secondary text-decoration-none me-1 mb-1">
-                        {{ tag.name }}
-                    </a>
-                {% empty %}
-                    <p class="text-muted">Теги отсутствуют</p>
-                {% endfor %}
+            <div class="modal-body">
+                Вы уверены, что хотите удалить новость "{{ news.title }}"?
             </div>
-            <div class="card-footer">
-                <a href="{% url 'news:news_list' %}" class="btn btn-sm btn-outline-primary">Все новости</a>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <form method="post" action="{% url 'news:delete_news' news.slug %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Удалить</button>
+                </form>
             </div>
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
@@ -307,8 +346,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     const commentContent = document.getElementById(`comment-content-${commentId}`);
                     const editForm = document.getElementById(`edit-form-${commentId}`);
                     const editBtn = document.querySelector(`.edit-btn[data-comment-id="${commentId}"]`);
-                    
-                    commentContent.querySelector('p').innerHTML = data.content.replace(/\n/g, '<br>');
+                    // Обновляем текст комментария
+                    commentContent.innerHTML = `<p class=\"card-text\">${data.content.replace(/\n/g, '<br>')}</p>`;
+                    // Обновляем дату, если есть updated_at
+                    const dateBlock = commentContent.parentElement.querySelector('small.text-muted');
+                    if (dateBlock) {
+                        if (data.is_edited) {
+                            dateBlock.innerHTML = `${data.created_at} <span class=\"text-muted\">(ред. ${data.updated_at})</span>`;
+                        } else {
+                            dateBlock.innerHTML = `${data.created_at}`;
+                        }
+                    }
                     editForm.style.display = 'none';
                     commentContent.style.display = 'block';
                     editBtn.style.display = 'inline-block';

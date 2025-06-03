@@ -46,13 +46,19 @@ pip install -r requirements.txt
      - `DJANGO_DEBUG`: режим отладки (True для разработки, False для продакшн)
      - `DJANGO_ALLOWED_HOSTS`: разрешенные хосты (localhost,127.0.0.1 для разработки)
 
-5. Примените миграции:
+5. Созданией миграций:
+```bash
+python3 manage.py makemigrations
+```
+Это создаст необходимые миграции.
+
+6. Примените миграций:
 ```bash
 python3 manage.py migrate
 ```
 Это создаст необходимые таблицы в базе данных.
 
-6. (Опционально) Загрузка тестовых данных:
+7. (Опционально) Загрузка тестовых данных:
 ```bash
 python3 manage.py loaddata fixtures/initial_data.json fixtures/many_to_many.json
 ```
@@ -62,13 +68,13 @@ python3 manage.py loaddata fixtures/initial_data.json fixtures/many_to_many.json
 - Примеры турниров и матчей
 ⚠️ Внимание: загрузка тестовых данных перезапишет существующие данные в базе.
 
-7. Создайте суперпользователя:
+8. Создайте суперпользователя:
 ```bash
 python3 manage.py createsuperuser
 ```
 Следуйте инструкциям в консоли для создания администратора сайта.
 
-8. Запустите сервер разработки:
+9. Запустите сервер разработки:
 ```bash
 python3 manage.py runserver
 ```

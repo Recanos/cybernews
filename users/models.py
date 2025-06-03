@@ -9,8 +9,6 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     nickname = models.CharField(max_length=40, unique=True, null=True, blank=True)
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
-    is_admin = models.BooleanField(default=False)
-    is_moderator = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

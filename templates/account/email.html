@@ -1,0 +1,101 @@
+{% extends "account/base_entrance.html" %}
+{% load i18n %}
+{% load allauth %}
+{% load crispy_forms_tags %}
+
+{% block head_title %}
+    {% trans "Управление email" %}
+{% endblock head_title %}
+
+{% block content %}
+    <h2 class="text-center mb-4">{% trans "Управление email" %}</h2>
+
+    {% if messages %}
+    <div class="alert alert-info">
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if emailaddresses %}
+        <p class="text-center">{% trans 'С вашим аккаунтом связаны следующие email:' %}</p>
+        
+        <form action="{% url 'account_email' %}" method="post">
+            {% csrf_token %}
+            <ul class="list-group mb-3">
+                {% for radio in emailaddress_radios %}
+                    {% with emailaddress=radio.emailaddress %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <label for="{{ radio.id }}" class="form-check-label flex-grow-1 me-3">
+                            {{ emailaddress.email }}
+                            {% if emailaddress.verified %}
+                                <span class="badge bg-success ms-1">{% trans "Подтвержден" %}</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark ms-1">{% trans "Не подтвержден" %}</span>
+                            {% endif %}
+                            {% if emailaddress.primary %}
+                                <span class="badge bg-primary ms-1">{% trans "Основной" %}</span>
+                            {% endif %}
+                        </label>
+                        <div class="form-check form-check-inline">
+                            <input type="radio" name="email" value="{{ emailaddress.email }}" id="{{ radio.id }}" class="form-check-input" {% if radio.checked %}checked{% endif %}>
+                        </div>
+                    </li>
+                    {% endwith %}
+                {% endfor %}
+            </ul>
+
+            <div class="d-flex justify-content-center gap-2 mb-3">
+                <button type="submit" name="action_primary" class="btn btn-primary btn-sm">{% trans 'Сделать основным' %}</button>
+                <button type="submit" name="action_send" class="btn btn-secondary btn-sm">{% trans 'Отправить подтверждение еще раз' %}</button>
+                <button type="submit" name="action_remove" class="btn btn-danger btn-sm">{% trans 'Удалить' %}</button>
+            </div>
+        </form>
+
+    {% else %}
+        {% include "account/snippets/warn_no_email.html" %}
+    {% endif %}
+
+    {% if can_add_email %}
+        <h2 class="text-center mb-3">{% trans "Добавить email" %}</h2>
+        <form method="post" action="{% url 'account_email' %}">
+            {% csrf_token %}
+            {# Manually render email field #}
+            <div class="mb-3">
+                <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                <input type="email" name="{{ form.email.html_name }}" id="{{ form.email.id_for_label }}" class="form-control" placeholder="Email"{% if form.email.value %} value="{{ form.email.value }}"{% endif %}>
+                {% if form.email.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.email.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% if form.email.help_text %}
+                    <div class="form-text">{{ form.email.help_text|safe }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="d-grid gap-2 mt-3">
+                 <button name="action_add" type="submit" class="btn btn-primary">{% trans "Добавить email" %}</button>
+            </div>
+        </form>
+    {% endif %}
+{% endblock content %}
+
+{% block extra_body %}
+<script type="text/javascript">
+(function() {
+  const message = "{% trans 'Вы уверены, что хотите удалить выбранный email?' %}";
+  const actions = document.getElementsByName('action_remove');
+  if (actions.length) {
+    actions[0].addEventListener("click", function(e) {
+      if (! confirm(message)) {
+        e.preventDefault();
+      }
+    });
+  }
+})();
+</script>
+{% endblock extra_body %}

@@ -36,142 +36,46 @@
             </div>
             <div class="col-md-9">
                 <h1 class="mb-2">{{ profile.nickname|default:user.username }}</h1>
-                <p class="mb-0">{{ user.email }}</p>
+                <p class="mb-0">Логин: {{ user.username }}</p>
+                <p class="mb-0">Email: {{ user.email }}</p>
                 <div class="mt-3">
                     <a href="{% url 'users:profile_edit' %}" class="btn btn-light">
                         <i class="bi bi-pencil"></i> Редактировать профиль
                     </a>
+                    <a href="{% url 'account_email' %}" class="btn btn-light ms-2">
+                        <i class="bi bi-envelope"></i> Изменить email
+                    </a>
+                    <a href="{% url 'account_change_password' %}" class="btn btn-light ms-2">
+                        <i class="bi bi-key"></i> Изменить пароль
+                    </a>
+                    <button type="button" class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#deleteProfileModal">
+                        <i class="bi bi-trash"></i> Удалить профиль
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Статистика</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 text-center">
-                            <div class="h3 mb-0">{{ profile.comments.count }}</div>
-                            <div class="text-muted">Комментариев</div>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <div class="h3 mb-0">{{ profile.favorites.count }}</div>
-                            <div class="text-muted">Избранное</div>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <div class="h3 mb-0">{{ profile.view_history.count }}</div>
-                            <div class="text-muted">История просмотров</div>
-                        </div>
-                    </div>
-                </div>
+<div class="modal fade" id="deleteProfileModal" tabindex="-1" aria-labelledby="deleteProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteProfileModalLabel">Подтверждение удаления профиля</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Последние комментарии</h5>
-                </div>
-                <div class="list-group list-group-flush">
-                    {% for comment in profile.comments.all|slice:":5" %}
-                        <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <a href="{% url 'news:news_detail' comment.news.pk %}" class="text-decoration-none">
-                                        {{ comment.news.title }}
-                                    </a>
-                                    <div class="text-muted small">
-                                        {{ comment.content|truncatewords:30 }}
-                                    </div>
-                                </div>
-                                <small class="text-muted">
-                                    {{ comment.created_at|naturaltime }}
-                                </small>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <div class="list-group-item text-muted">
-                            Комментариев пока нет
-                        </div>
-                    {% endfor %}
-                </div>
+            <div class="modal-body">
+                Вы уверены, что хотите удалить свой профиль? Это действие нельзя отменить.
             </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">История просмотров</h5>
-                </div>
-                <div class="list-group list-group-flush">
-                    {% for item in profile.view_history.all|slice:":5" %}
-                        <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <a href="{{ item.url }}" class="text-decoration-none">
-                                        {{ item.title }}
-                                    </a>
-                                </div>
-                                <small class="text-muted">
-                                    {{ item.viewed_at|naturaltime }}
-                                </small>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <div class="list-group-item text-muted">
-                            История просмотров пуста
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Избранное</h5>
-                </div>
-                <div class="list-group list-group-flush">
-                    {% for item in profile.favorites.all|slice:":5" %}
-                        <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <a href="{{ item.url }}" class="text-decoration-none">
-                                        {{ item.title }}
-                                    </a>
-                                </div>
-                                <small class="text-muted">
-                                    {{ item.added_at|naturaltime }}
-                                </small>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <div class="list-group-item text-muted">
-                            Избранное пусто
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Быстрые ссылки</h5>
-                </div>
-                <div class="list-group list-group-flush">
-                    <a href="{% url 'users:favorites' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-bookmark"></i> Все избранное
-                    </a>
-                    <a href="{% url 'users:view_history' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-clock-history"></i> Вся история
-                    </a>
-                    <a href="{% url 'account_change_password' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-key"></i> Изменить пароль
-                    </a>
-                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <form method="post" action="{% url 'users:delete_profile' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Удалить</button>
+                </form>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %} 

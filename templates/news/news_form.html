@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - CyberNews{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h1 class="h3 mb-0">Опубликовать новость</h1>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                        <div class="mb-3">
+                            {# Рендерим метку только для полей, которые не являются полем 'image' #}
+                            {% if field.name != 'image' %}
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                    {% if field.name == 'category' %}
+                                        <button type="button" class="btn btn-link btn-sm p-0 ms-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal">Добавить категорию</button>
+                                    {% endif %}
+                                    {% if field.name == 'tags' %}
+                                        <button type="button" class="btn btn-link btn-sm p-0 ms-2" data-bs-toggle="modal" data-bs-target="#addTagModal">Добавить тег</button>
+                                    {% endif %}
+                                </label>
+                            {% endif %}
+
+                            {# Проверяем имя поля и рендерим его с помощью crispy_forms_tags #}
+                            {% if field.name == 'image' %}
+                                {{ field|as_crispy_field }}
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
+                            
+                            {% if field.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ field.errors }}
+                                </div>
+                            {% endif %}
+                            {% if field.help_text %}
+                                <div class="form-text">
+                                    {{ field.help_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="d-flex">
+                        <button type="submit" class="btn btn-primary">Опубликовать новость</button>
+                        <a href="{% if news %}{% url 'news:news_detail' news.slug %}{% else %}{% url 'news:news_list' %}{% endif %}" class="btn btn-secondary ms-3">
+                            Отмена
+                        </a>
+                    </div>
+                </form>
+
+                <!-- Модальное окно для добавления категории -->
+                <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addCategoryModalLabel">Добавить категорию</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form method="post" action="{% url 'news:create_category' %}">
+                                {% csrf_token %}
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="categoryName" class="form-label">Название категории</label>
+                                        <input type="text" class="form-control" id="categoryName" name="name" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                    <button type="submit" class="btn btn-primary">Добавить</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Модальное окно для добавления тега -->
+                <div class="modal fade" id="addTagModal" tabindex="-1" aria-labelledby="addTagModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addTagModalLabel">Добавить тег</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form method="post" action="{% url 'news:create_tag' %}">
+                                {% csrf_token %}
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="tagName" class="form-label">Название тега</label>
+                                        <input type="text" class="form-control" id="tagName" name="name" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                    <button type="submit" class="btn btn-primary">Добавить</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Добавление категории
+    document.querySelector('#addCategoryModal form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = this;
+        const data = new FormData(form);
+        fetch("{% url 'news:create_category' %}", {
+            method: 'POST',
+            headers: {'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value},
+            body: data
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Добавить новую категорию в select
+                const select = document.getElementById("id_category");
+                const option = document.createElement("option");
+                option.value = data.id;
+                option.textContent = data.name;
+                option.selected = true;
+                select.appendChild(option);
+                // Закрыть модалку
+                var modal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
+                modal.hide();
+                form.reset();
+            } else {
+                alert(data.error || "Ошибка при добавлении категории");
+            }
+        });
+    });
+
+    // Добавление тега
+    document.querySelector('#addTagModal form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = this;
+        const data = new FormData(form);
+        fetch("{% url 'news:create_tag' %}", {
+            method: 'POST',
+            headers: {'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value},
+            body: data
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Добавить новый тег в select
+                const select = document.getElementById("id_tags");
+                const option = document.createElement("option");
+                option.value = data.id;
+                option.textContent = data.name;
+                option.selected = true;
+                select.appendChild(option);
+                // Закрыть модалку
+                var modal = bootstrap.Modal.getInstance(document.getElementById('addTagModal'));
+                modal.hide();
+                form.reset();
+            } else {
+                alert(data.error || "Ошибка при добавлении тега");
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

@@ -1,12 +1,51 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.core.paginator import Paginator
 from .models import News, Category, Tag, Comment
-from .forms import CommentForm
+from .forms import CommentForm, NewsForm, CategoryForm, TagForm
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.middleware.csrf import get_token
+from django.utils.text import slugify
+from django.utils.dateformat import format as date_format
+import uuid
+from django.utils.timezone import localtime
+from django.db.models import Count, F, ExpressionWrapper, IntegerField
+import re
+
+def transliterate(text):
+    """Транслитерация русского текста в латиницу"""
+    translit_dict = {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+        'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+        'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+        'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+        'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+        'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo',
+        'Ж': 'Zh', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
+        'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+        'Ф': 'F', 'Х': 'H', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sch',
+        'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya'
+    }
+
+    # Заменяем русские буквы на латинские
+    for cyr, lat in translit_dict.items():
+        text = text.replace(cyr, lat)
+
+    # Заменяем все символы, кроме букв и цифр, на дефис
+    text = re.sub(r'[^a-zA-Z0-9]', '-', text)
+
+    # Удаляем множественные дефисы
+    text = re.sub(r'-+', '-', text)
+
+    # Удаляем дефисы в начале и конце
+    text = text.strip('-')
+
+    return text.lower()
+
+def is_staff_user(user):
+    return user.is_staff or user.is_superuser
 
 def news_list(request, category_slug=None, tag_slug=None):
     news_list = News.objects.filter(is_published=True)
@@ -20,6 +59,22 @@ def news_list(request, category_slug=None, tag_slug=None):
     if tag_slug:
         tag = get_object_or_404(Tag, slug=tag_slug)
         news_list = news_list.filter(tags=tag)
+
+    sort_news = request.GET.get('sort_news', 'newest')
+    if sort_news == 'oldest':
+        news_list = news_list.order_by('created_at')
+    elif sort_news == 'popular_views':
+        news_list = news_list.order_by('-views_count', '-created_at')
+    elif sort_news == 'popular_comments':
+        news_list = news_list.annotate(comments_count=Count('comments')).order_by('-comments_count', '-created_at')
+    elif sort_news == 'popular':
+        news_list = news_list.annotate(
+            likes_count=Count('likes'),
+            dislikes_count=Count('dislikes'),
+            popularity_score=ExpressionWrapper(F('likes_count') - F('dislikes_count'), output_field=IntegerField())
+        ).order_by('-popularity_score', '-created_at')
+    else:  # newest
+        news_list = news_list.order_by('-created_at')
     
     paginator = Paginator(news_list, 10)
     page = request.GET.get('page')
@@ -33,6 +88,7 @@ def news_list(request, category_slug=None, tag_slug=None):
         'tag': tag,
         'current_category': category,
         'current_tag': tag,
+        'sort_news': sort_news,
     })
 
 def news_detail(request, slug):
@@ -158,8 +214,8 @@ def news_search(request):
 def delete_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
     
-    # Проверяем, что пользователь является автором комментария
-    if comment.author != request.user:
+    # Проверяем, что пользователь является автором комментария или имеет права администратора/модератора
+    if comment.author != request.user and not (request.user.is_staff or request.user.is_superuser):
         messages.error(request, 'У вас нет прав на удаление этого комментария.')
         return redirect('news:news_detail', slug=comment.news.slug)
     
@@ -211,7 +267,10 @@ def edit_comment(request, comment_id):
     
     return JsonResponse({
         'success': True,
-        'content': comment.content
+        'content': comment.content,
+        'updated_at': date_format(localtime(comment.updated_at), 'd.m.Y H:i'),
+        'created_at': date_format(localtime(comment.created_at), 'd.m.Y H:i'),
+        'is_edited': (comment.updated_at - comment.created_at).total_seconds() > 1
     })
 
 @login_required
@@ -276,3 +335,134 @@ def dislike_news(request, slug):
         'dislikes_count': news.get_dislikes_count(),
         'likes_count': news.get_likes_count()
     })
+
+@login_required
+@user_passes_test(is_staff_user)
+def create_news(request):
+    if request.method == 'POST':
+        form = NewsForm(request.POST, request.FILES)
+        if form.is_valid():
+            news = form.save(commit=False)
+            news.author = request.user
+            # Генерируем уникальный slug
+            base_slug = slugify(news.title)
+            unique_slug = base_slug
+            counter = 1
+            # Проверяем, существует ли новость с таким slug
+            while News.objects.filter(slug=unique_slug).exists():
+                unique_slug = f"{base_slug}-{counter}"
+                counter += 1
+            news.slug = unique_slug
+            news.is_published = True
+            news.save()
+            form.save_m2m()  # Save many-to-many relationships
+            messages.success(request, 'Новость успешно опубликована!')
+            return redirect('news:news_detail', slug=news.slug)
+    else:
+        form = NewsForm()
+    
+    return render(request, 'news/news_form.html', {
+        'form': form,
+        'title': 'Создать новость',
+        'button_text': 'Создать'
+    })
+
+@login_required
+@user_passes_test(is_staff_user)
+def edit_news(request, slug):
+    news = get_object_or_404(News, slug=slug)
+    
+    if request.method == 'POST':
+        form = NewsForm(request.POST, request.FILES, instance=news)
+        if form.is_valid():
+            news = form.save()
+            messages.success(request, 'Новость успешно обновлена!')
+            return redirect('news:news_detail', slug=news.slug)
+    else:
+        form = NewsForm(instance=news)
+    
+    return render(request, 'news/news_form.html', {
+        'form': form,
+        'news': news,
+        'title': 'Редактировать новость',
+        'button_text': 'Сохранить'
+    })
+
+@login_required
+@user_passes_test(is_staff_user)
+@require_POST
+def delete_news(request, slug):
+    news = get_object_or_404(News, slug=slug)
+    news.delete()
+    messages.success(request, 'Новость успешно удалена!')
+    return redirect('news:news_list')
+
+@require_POST
+def create_category(request):
+    name = request.POST.get('name')
+    if not name:
+        return JsonResponse({'success': False, 'error': 'Название обязательно'})
+    category, created = Category.objects.get_or_create(name=name)
+    if created:
+        category.save()
+    return JsonResponse({'success': True, 'id': category.id, 'name': category.name, 'slug': category.slug})
+
+@require_POST
+def create_tag(request):
+    name = request.POST.get('name')
+    if not name:
+        return JsonResponse({'success': False, 'error': 'Название обязательно'})
+    tag, created = Tag.objects.get_or_create(name=name)
+    if created:
+        tag.save()
+    return JsonResponse({'success': True, 'id': tag.id, 'name': tag.name, 'slug': tag.slug})
+
+@login_required
+@user_passes_test(is_staff_user)
+def edit_category(request, pk):
+    category = get_object_or_404(Category, pk=pk)
+    if request.method == 'POST':
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            category = form.save(commit=False)
+            category.slug = transliterate(category.name)
+            category.save()
+            messages.success(request, 'Категория успешно обновлена.')
+            return redirect('news:news_list') # Redirect back to news list
+    else:
+        form = CategoryForm(instance=category)
+    return render(request, 'news/category_form.html', {'form': form, 'title': 'Редактировать категорию'})
+
+@login_required
+@user_passes_test(is_staff_user)
+def delete_category(request, pk):
+    category = get_object_or_404(Category, pk=pk)
+    if request.method == 'POST':
+        category.delete()
+        messages.success(request, f'Категория "{category.name}" успешно удалена.')
+    return redirect('news:news_list') # Always redirect back to news list
+
+@login_required
+@user_passes_test(is_staff_user)
+def edit_tag(request, pk):
+    tag = get_object_or_404(Tag, pk=pk)
+    if request.method == 'POST':
+        form = TagForm(request.POST, instance=tag)
+        if form.is_valid():
+            tag = form.save(commit=False)
+            tag.slug = transliterate(tag.name)
+            tag.save()
+            messages.success(request, 'Тег успешно обновлен.')
+            return redirect('news:news_list') # Redirect back to news list
+    else:
+        form = TagForm(instance=tag)
+    return render(request, 'news/tag_form.html', {'form': form, 'title': 'Редактировать тег'})
+
+@login_required
+@user_passes_test(is_staff_user)
+def delete_tag(request, pk):
+    tag = get_object_or_404(Tag, pk=pk)
+    if request.method == 'POST':
+        tag.delete()
+        messages.success(request, f'Тег "{tag.name}" успешно удален.')
+    return redirect('news:news_list') # Always redirect back to news list

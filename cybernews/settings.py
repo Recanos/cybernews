@@ -182,10 +182,6 @@ ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/'
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = 'account_login'
 ACCOUNT_USER_DISPLAY = lambda user: user.email
 ACCOUNT_SESSION_REMEMBER = True
-ACCOUNT_FORMS = {
-    'login': 'users.forms.CustomLoginForm',
-    'signup': 'users.forms.CustomSignupForm',
-}
 
 # Login/Logout URLs
 LOGIN_URL = 'account_login'

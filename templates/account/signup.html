@@ -21,7 +21,7 @@
     {% if form.errors %}
     <div class="alert alert-danger">
         {% for field, errors in form.errors.items %}
-            <strong>{{ field }}:</strong>
+            <strong>{{ field.label }}:</strong>
             {% for error in errors %}
                 <p>{{ error }}</p>
             {% endfor %}
@@ -43,7 +43,41 @@
 
     <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
         {% csrf_token %}
-        {{ form|crispy }}
+
+        {# Explicitly render fields in desired order with required indicators #}
+
+        {# Username (Логин) field #}
+        {% with field=form.username %}
+        <div class="mb-3">
+            <label for="{{ field.id_for_label }}" class="form-label">Логин <span class="text-danger">*</span></label>
+            <input type="text" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" placeholder="Логин" required{% if field.value %} value="{{ field.value }}"{% endif %}>
+        </div>
+        {% endwith %}
+
+        {# Email field #}
+        {% with field=form.email %}
+        <div class="mb-3">
+            <label for="{{ field.id_for_label }}" class="form-label">Email <span class="text-danger">*</span></label>
+            <input type="email" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" placeholder="Email" required{% if field.value %} value="{{ field.value }}"{% endif %}>
+        </div>
+        {% endwith %}
+
+        {# Password field #}
+        {% with field=form.password1 %}
+        <div class="mb-3">
+            <label for="{{ field.id_for_label }}" class="form-label">Пароль <span class="text-danger">*</span></label>
+            <input type="password" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" placeholder="Пароль" required>
+        </div>
+        {% endwith %}
+
+        {# Password Confirmation field #}
+        {% with field=form.password2 %}
+        <div class="mb-3">
+            <label for="{{ field.id_for_label }}" class="form-label">Подтверждение пароля <span class="text-danger">*</span></label>
+            <input type="password" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" placeholder="Подтверждение пароля" required>
+        </div>
+        {% endwith %}
+
         {% if redirect_field_value %}
             <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
         {% endif %}

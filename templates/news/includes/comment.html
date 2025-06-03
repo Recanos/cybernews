@@ -1,19 +1,30 @@
+{% load static %}
 {% load news_tags %}
 
 <div class="card {% if is_reply %}mt-3 ms-4{% else %}mb-3{% endif %}">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <div>
-                <strong>{{ comment.author.username }}</strong>
-                <small class="text-muted ms-2">
-                    {{ comment.created_at|date:"d.m.Y H:i" }}
-                </small>
+            <div class="d-flex align-items-center">
+                {% if comment.author.profile.avatar %}
+                    <img src="{{ comment.author.profile.avatar.url }}" alt="{{ comment.author.profile.nickname|default:comment.author.username }}" class="rounded-circle me-2" style="width: 24px; height: 24px; object-fit: cover;">
+                {% else %}
+                    <img src="{% static 'images/default-avatar.png' %}" alt="{{ comment.author.profile.nickname|default:comment.author.username }}" class="rounded-circle me-2" style="width: 24px; height: 24px; object-fit: cover;">
+                {% endif %}
+                <div>
+                    <strong>{{ comment.author.profile.nickname|default:comment.author.username }} ({{ comment.author.username }})</strong>
+                    <small class="text-muted ms-2">
+                        {{ comment.created_at|date:"d.m.Y H:i" }}
+                        {% if comment.is_edited %}
+                            <span class="text-muted">(ред. {{ comment.updated_at|date:"d.m.Y H:i" }})</span>
+                        {% endif %}
+                    </small>
+                </div>
             </div>
             <div>
+                {% if user.is_authenticated %}
                 <button class="btn btn-sm btn-outline-primary reply-btn" data-comment-id="{{ comment.id }}" title="Ответить">
                     <i class="bi bi-reply"></i>
                 </button>
-                {% if user.is_authenticated %}
                     <button class="btn btn-sm btn-outline-secondary like-btn" data-comment-id="{{ comment.id }}" title="Нравится">
                         <i class="bi bi-heart{% if comment|has_liked:user %}-fill text-danger{% endif %}"></i>
                         <span class="likes-count">{{ comment.get_likes_count }}</span>
@@ -22,20 +33,28 @@
                         <i class="bi bi-hand-thumbs-down{% if comment|has_disliked:user %}-fill text-danger{% endif %}"></i>
                         <span class="dislikes-count">{{ comment.get_dislikes_count }}</span>
                     </button>
-                {% endif %}
                 {% if user == comment.author %}
                     <button class="btn btn-sm btn-outline-warning edit-btn" data-comment-id="{{ comment.id }}" title="Редактировать">
                         <i class="bi bi-pencil"></i>
                     </button>
+                    {% endif %}
+                    {% if user == comment.author or user.is_staff or user.is_superuser %}
                     <a href="{% url 'news:delete_comment' comment.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Вы уверены, что хотите удалить этот комментарий?')" title="Удалить">
                         <i class="bi bi-trash"></i>
                     </a>
+                    {% endif %}
+                {% else %}
+                    <span class="ms-2">
+                        <i class="bi bi-heart"></i> {{ comment.get_likes_count }}
+                        <i class="bi bi-hand-thumbs-down ms-2"></i> {{ comment.get_dislikes_count }}
+                    </span>
                 {% endif %}
             </div>
         </div>
         <div class="comment-content" id="comment-content-{{ comment.id }}">
             <p class="card-text">{{ comment.content|linebreaks }}</p>
         </div>
+        {% if user.is_authenticated %}
         <div class="edit-form mt-3" id="edit-form-{{ comment.id }}" style="display: none;">
             <form method="post" action="{% url 'news:edit_comment' comment.id %}" class="mb-3">
                 {% csrf_token %}
@@ -57,6 +76,7 @@
                 <button type="button" class="btn btn-secondary mt-2 cancel-reply" data-comment-id="{{ comment.id }}">Отмена</button>
             </form>
         </div>
+        {% endif %}
         
         <!-- Рекурсивное отображение ответов с учетом сортировки -->
         {% with replies=comment.replies.all %}
@@ -67,7 +87,7 @@
                     {% endfor %}
                 {% endwith %}
             {% elif sort_comments == 'popular' %}
-                {% with sorted_replies=replies|dictsortreversed:"get_popularity" %}
+                {% with sorted_replies=replies|dictsortreversed:"popularity" %}
                     {% for reply in sorted_replies %}
                         {% include 'news/includes/comment.html' with comment=reply is_reply=True %}
                     {% endfor %}

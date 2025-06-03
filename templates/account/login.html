@@ -35,24 +35,35 @@
     {% endif %}
 
     <p class="text-center">
-        {% trans "Если у вас ещё нет учётной записи, пожалуйста, сначала" %}
+        {% trans "Если у вас ещё нет аккаунта, пожалуйста," %}
         <a href="{{ signup_url }}">{% trans "зарегистрируйтесь" %}</a>.
     </p>
 
     <form class="login" method="POST" action="{% url 'account_login' %}">
         {% csrf_token %}
-        {{ form|crispy }}
+        {% for field in form %}
+            {% if field.name == 'login' %}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">Логин или email</label>
+                    <input type="text" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" placeholder="Логин или email">
+                </div>
+            {% elif field.name == 'password' %}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">Пароль</label>
+                    <input type="password" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" placeholder="Пароль">
+                </div>
+            {% else %}
+                {{ field|as_crispy_field }}
+            {% endif %}
+        {% endfor %}
         {% if redirect_field_value %}
             <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
         {% endif %}
 
         <div class="d-grid gap-2 mt-4">
             <button class="btn btn-primary" type="submit">{% trans "Войти" %}</button>
-        </div>
-
-        <div class="text-center mt-3">
-            <a class="text-primary" href="{% url 'account_reset_password' %}">
-                {% trans "Забыли свой пароль?" %}
+            <a class="btn btn-link" href="{% url 'account_reset_password' %}">
+                {% trans "Забыли пароль?" %}
             </a>
         </div>
     </form>
